@@ -31,6 +31,7 @@ func parseFlags() client.Options {
 	configFlag := flag.Bool("config", false, "Edit config settings")
 	selectModel := flag.Bool("m", false, "Select a default model")
 	urlFlag := flag.String("url", "", "Base URL for the LLM API")
+	roleFlag := flag.String("role", "", "Select a role")
 	flag.Parse()
 
 	return client.Options{
@@ -39,6 +40,7 @@ func parseFlags() client.Options {
 		Config:      *configFlag,
 		SelectModel: *selectModel,
 		URL:         *urlFlag,
+		Role:        *roleFlag,
 	}
 }
 

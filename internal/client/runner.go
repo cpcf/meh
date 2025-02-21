@@ -19,6 +19,7 @@ type Options struct {
 	Config      bool
 	SelectModel bool
 	URL         string
+	Role        string
 	QueryArgs   []string
 }
 
@@ -37,11 +38,10 @@ func RunApp(opts Options) error {
 	}
 
 	// Select the active API.
-	activeAPI, conf, err := selectAPI(conf, opts.URL)
+	activeAPI, conf, err := selectAPI(conf, opts.URL, opts.Role)
 	if err != nil {
 		return err
 	}
-
 	// Initialize the API client.
 	api := ollama.NewAPI(activeAPI.APIURL)
 	models := api.Models()
@@ -83,9 +83,29 @@ func RunApp(opts Options) error {
 
 // selectAPI returns the active API configuration.
 // If a URL is provided, it either finds an existing API or adds a new one.
-func selectAPI(conf *Config, urlFlag string) (APIConfig, *Config, error) {
+func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, error) {
 	var activeAPI APIConfig
-	if urlFlag != "" {
+	if roleFlag != "" {
+		role, found := FindRole(*conf, roleFlag)
+		if !found {
+			fmt.Printf("Role '%s' does not exist. Let's create it.\n", roleFlag)
+			var err error
+			role, err = CreateRole(roleFlag, *conf)
+			if err != nil {
+				return activeAPI, nil, err
+			}
+			conf.Roles = append(conf.Roles, role)
+			if err := SaveConfig(conf); err != nil {
+				return activeAPI, nil, fmt.Errorf("error saving config: %w", err)
+			}
+			fmt.Printf("Role %v created successfully.\n", role)
+		}
+		activeAPI = APIConfig{
+			APIURL:       role.APIURL,
+			DefaultModel: role.Model,
+		}
+		// Optionally, pass role.SystemPrompt to your API client if needed.
+	} else if urlFlag != "" {
 		found := false
 		for _, apiConf := range conf.APIs {
 			if apiConf.APIURL == urlFlag {

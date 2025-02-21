@@ -13,9 +13,18 @@ type APIConfig struct {
 	DefaultModel string `yaml:"default_model"`
 }
 
+// Role represents a user-defined role that overrides API/model settings and may include a system prompt.
+type Role struct {
+	Name         string `yaml:"name"`
+	APIURL       string `yaml:"api_url"`
+	Model        string `yaml:"model"`
+	SystemPrompt string `yaml:"system_prompt,omitempty"`
+}
+
 // Config holds a collection of API configurations.
 type Config struct {
-	APIs []APIConfig `yaml:"apis"`
+	APIs  []APIConfig `yaml:"apis"`
+	Roles []Role      `yaml:"roles"`
 }
 
 var confpath = "/.config/.meh/config.yml"
