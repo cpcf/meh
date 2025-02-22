@@ -11,6 +11,7 @@ import (
 type APIConfig struct {
 	APIURL       string `yaml:"api_url"`
 	DefaultModel string `yaml:"default_model"`
+	SystemPrompt string `yaml:"system_prompt,omitempty"`
 }
 
 // Role represents a user-defined role that overrides API/model settings and may include a system prompt.

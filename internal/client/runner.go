@@ -43,7 +43,7 @@ func RunApp(opts Options) error {
 		return err
 	}
 	// Initialize the API client.
-	api := ollama.NewAPI(activeAPI.APIURL)
+	api := ollama.NewAPI(activeAPI.APIURL, activeAPI.SystemPrompt)
 	models := api.Models()
 	if len(models) == 0 {
 		return fmt.Errorf("no models found")
@@ -103,6 +103,7 @@ func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, erro
 		activeAPI = APIConfig{
 			APIURL:       role.APIURL,
 			DefaultModel: role.Model,
+			SystemPrompt: role.SystemPrompt,
 		}
 		// Optionally, pass role.SystemPrompt to your API client if needed.
 	} else if urlFlag != "" {

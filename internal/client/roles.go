@@ -42,7 +42,7 @@ func CreateRole(roleName string, conf Config) (Role, error) {
 	selectedAPI := conf.APIs[index]
 
 	// Instantiate API client.
-	apiInstance := ollama.NewAPI(selectedAPI.APIURL)
+	apiInstance := ollama.NewAPI(selectedAPI.APIURL, selectedAPI.SystemPrompt)
 	models := apiInstance.Models()
 	if len(models) == 0 {
 		return Role{}, fmt.Errorf("no models found for the selected API")

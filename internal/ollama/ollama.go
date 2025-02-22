@@ -25,6 +25,7 @@ type Request struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages,omitempty"` // for chat requests
 	Prompt   string    `json:"prompt,omitempty"`   // for generate (completion) requests
+	System   string    `json:"system,omitempty"`   // optional: for completions with a system prompt
 	Suffix   string    `json:"suffix,omitempty"`   // optional: for completions with a suffix
 	Stream   bool      `json:"stream"`
 }
@@ -120,16 +121,26 @@ type runningModelsResponse struct {
 
 // OllamaAPI implements the full LLM API interface.
 type OllamaAPI struct {
-	baseURL string    // Base URL, e.g., "http://localhost:11434/api"
-	model   string    // Selected model name (e.g., "llama3.2")
-	history []Message // Conversation history for Chat
-	closed  bool      // Flag to mark if the API is closed
+	baseURL      string    // Base URL, e.g., "http://localhost:11434/api"
+	model        string    // Selected model name (e.g., "llama3.2")
+	systemPrompt string    // System prompt
+	history      []Message // Conversation history for Chat
+	closed       bool      // Flag to mark if the API is closed
 }
 
-func NewAPI(baseURL string) *OllamaAPI {
-	return &OllamaAPI{
-		baseURL: baseURL,
+func NewAPI(baseURL, system string) *OllamaAPI {
+	// if we have a system prompt, add it to the history
+	history := make([]Message, 0)
+	if system != "" {
+		history = append(history, Message{Role: "system", Content: system})
 	}
+
+	return &OllamaAPI{
+		baseURL:      baseURL,
+		systemPrompt: system,
+		history:      history,
+	}
+
 }
 
 // Chat sends a chat message using the /chat endpoint.
@@ -140,10 +151,8 @@ func (o *OllamaAPI) Chat(message string, results chan string, stream bool) {
 		results <- "Error: API is closed"
 		return
 	}
-
 	// Append the user's message.
 	o.history = append(o.history, Message{Role: "user", Content: message})
-
 	req := Request{
 		Model:    o.model,
 		Messages: o.history,
@@ -196,6 +205,10 @@ func (o *OllamaAPI) Prompt(message string, results chan string, stream bool) {
 		Stream: stream,
 	}
 
+	if o.systemPrompt != "" {
+		req.System = o.systemPrompt
+	}
+
 	endpoint := o.baseURL + "/generate"
 
 	if stream {
@@ -231,6 +244,7 @@ func (o *OllamaAPI) Models() []string {
 	}
 
 	endpoint := o.baseURL + "/tags"
+
 	httpResp, err := http.Get(endpoint)
 	if err != nil {
 		fmt.Printf("Error fetching models: %v\n", err)
@@ -251,8 +265,7 @@ func (o *OllamaAPI) Models() []string {
 	return models
 }
 
-// SelectModel sets the active model and resets any existing conversation history.
+// SelectModel sets the active model
 func (o *OllamaAPI) SelectModel(model string) {
 	o.model = model
-	o.history = []Message{}
 }
