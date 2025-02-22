@@ -15,7 +15,7 @@ Machine Enhanced Help (`meh`) is a command-line tool for interacting with large 
 ### Help
 ```sh
 $ meh -h
-Usage:
+Usage: [options] <query>
   -config
         Edit config settings
   -f string
@@ -27,7 +27,7 @@ Usage:
   -role string
         Select a role
   -url string
-        Base URL for the LLM API
+        Base URL for the LLM 
 ```
 
 ### Basic Usage
