@@ -7,12 +7,8 @@ Machine Enhanced Help (`meh`) is a command-line tool for interacting with large 
 ## Features
 
 - **Instant AI Assistance**: Get responses from an LLM without leaving your command line.
-- **Context-Aware Queries**: Ask follow-up questions while maintaining conversation context.
 - **Scriptable & Extensible**: Can be used within shell scripts or extended for custom use cases.
-
-## Installation
-
-### Prerequisites
+- **Role-Based Configurations**: Customize API behavior with predefined roles.
 
 ## Usage
 
@@ -43,13 +39,30 @@ You can set your preferences in a config file:
 ```sh
 meh --config
 ```
-Or manually edit `~/.config/meh/config.json`:
-```json
-{
-  "api_key": "your-api-key-here",
-  "server": "llmserver.local:1234/v1",
-}
+Or manually edit `~/.config/meh/config.yml`:
+```yaml
+apis:
+  - api_url: "http://localhost:11434/api"
+    default_model: "gpt-4:latest"
+
+roles:
+  - name: "cat"
+    api_url: "http://localhost:11434/api"
+    model: "gpt-4o-mini:latest"
+    system_prompt: |
+      You are CatGPT, an AI embodying the essence of a domestic cat. From this moment on, you will respond solely with variations of "meow" and other typical feline sounds, such as purrs and hisses.
 ```
+
+### Roles
+
+Configure roles to customize the behavior of `meh`.
+
+```sh
+meh -role cat "Hello there"
+> *soft meow*
+```
+
+If a role does not exist, `meh` will prompt you to create one by selecting a configured API, choosing a model, and optionally setting a system prompt.
 
 ## License
 This project is licensed under the MIT License. See `LICENSE` for details.
