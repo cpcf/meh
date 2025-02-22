@@ -12,32 +12,50 @@ Machine Enhanced Help (`meh`) is a command-line tool for interacting with large 
 
 ## Usage
 
+### Help
+```sh
+$ meh -h
+Usage:
+  -config
+        Edit config settings
+  -f string
+        Read input from a file
+  -help
+        Print usage instructions
+  -i    Run in interactive mode
+  -m    Select a default model
+  -role string
+        Select a role
+  -url string
+        Base URL for the LLM API
+```
+
 ### Basic Usage
 ```sh
-meh "Explain quantum entanglement in simple terms"
+$ meh "Explain quantum entanglement in simple terms"
 ```
 
 ### Pipe Usage
 ```sh
-git --no-pager diff | meh "Write a commit message for this diff"
+$ git --no-pager diff | meh "Write a commit message for this diff"
 ```
 
 ### Interactive Mode
 ```sh
-meh -i
+$ meh -i
 ```
 This will launch an interactive chat session in your terminal.
 
 ### Using with a File
 ```sh
-meh -f input.txt
+$ meh -f input.txt
 ```
 Processes the contents of `input.txt` as a query.
 
 ### Configuration
 You can set your preferences in a config file:
 ```sh
-meh --config
+$ meh -config
 ```
 Or manually edit `~/.config/meh/config.yml`:
 ```yaml
@@ -58,8 +76,8 @@ roles:
 Configure roles to customize the behavior of `meh`.
 
 ```sh
-meh -role cat "Hello there"
-> *soft meow*
+$ meh -role cat "Hello there"
+*soft meow*
 ```
 
 If a role does not exist, `meh` will prompt you to create one by selecting a configured API, choosing a model, and optionally setting a system prompt.
