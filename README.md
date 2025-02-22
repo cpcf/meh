@@ -19,7 +19,7 @@ meh "Explain quantum entanglement in simple terms"
 
 ### Pipe Usage
 ```sh
-git diff --word-diff=porcelain | meh "Write a commit message for this diff"
+git --no-pager diff | meh "Write a commit message for this diff"
 ```
 
 ### Interactive Mode
