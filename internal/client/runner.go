@@ -69,7 +69,7 @@ func RunApp(opts Options) error {
 
 	switch {
 	case opts.Interactive:
-		return runInteractive(api)
+		runInteractive(api)
 	case opts.FilePath != "":
 		return runFile(api, opts.FilePath)
 	case len(opts.QueryArgs) > 0:
@@ -80,8 +80,9 @@ func RunApp(opts Options) error {
 		return nil
 	default:
 		// What should the defaut behaviour be?
-		return runInteractive(api)
+		runInteractive(api)
 	}
+	return nil
 }
 
 func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, error) {
@@ -181,26 +182,8 @@ func selectModelInteractively(api API, models []string, activeAPI *APIConfig) er
 }
 
 // runInteractive runs a simple interactive chat.
-func runInteractive(api API) error {
-	fmt.Println("Entering interactive mode. Type your messages below.")
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
-		}
-		line := scanner.Text()
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-		results := make(chan string)
-		go api.Chat(line, results, true)
-		for res := range results {
-			fmt.Print(res)
-		}
-		fmt.Println()
-	}
-	return nil
+func runInteractive(api API) {
+	ChatTui(api)
 }
 
 // runFile reads input from a file and sends it as a prompt.
