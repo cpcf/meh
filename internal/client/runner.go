@@ -67,7 +67,6 @@ func RunApp(opts Options) error {
 		api.SelectModel(activeAPI.DefaultModel)
 	}
 
-	// Run in the mode specified by the flags.
 	switch {
 	case opts.Interactive:
 		return runInteractive(api)
@@ -85,8 +84,6 @@ func RunApp(opts Options) error {
 	}
 }
 
-// selectAPI returns the active API configuration.
-// If a URL is provided, it either finds an existing API or adds a new one.
 func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, error) {
 	var activeAPI APIConfig
 	if roleFlag != "" {
@@ -109,7 +106,6 @@ func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, erro
 			DefaultModel: role.Model,
 			SystemPrompt: role.SystemPrompt,
 		}
-		// Optionally, pass role.SystemPrompt to your API client if needed.
 	} else if urlFlag != "" {
 		found := false
 		for _, apiConf := range conf.APIs {
@@ -155,7 +151,6 @@ type API interface {
 	Prompt(query string, results chan string, flag bool)
 }
 
-// selectModelInteractively prompts the user to choose a model.
 func selectModelInteractively(api API, models []string, activeAPI *APIConfig) error {
 	if len(models) == 1 {
 		activeAPI.DefaultModel = models[0]
@@ -185,7 +180,7 @@ func selectModelInteractively(api API, models []string, activeAPI *APIConfig) er
 	return nil
 }
 
-// runInteractive runs a simple REPL.
+// runInteractive runs a simple interactive chat.
 func runInteractive(api API) error {
 	fmt.Println("Entering interactive mode. Type your messages below.")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -241,7 +236,6 @@ func runQuery(api API, query string) error {
 	return nil
 }
 
-// usage prints usage instructions.
 func usage() {
 	fmt.Println("Usage: [options] <query>")
 	flag.PrintDefaults()

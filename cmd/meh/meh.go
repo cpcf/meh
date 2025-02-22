@@ -24,7 +24,6 @@ func main() {
 	}
 }
 
-// parseFlags parses the command-line flags and returns a client.Options struct.
 func parseFlags() client.Options {
 	interactive := flag.Bool("i", false, "Run in interactive mode")
 	filePath := flag.String("f", "", "Read input from a file")
@@ -32,6 +31,7 @@ func parseFlags() client.Options {
 	selectModel := flag.Bool("m", false, "Select a default model")
 	urlFlag := flag.String("url", "", "Base URL for the LLM API")
 	roleFlag := flag.String("role", "", "Select a role")
+	helpFlag := flag.Bool("help", false, "Print usage instructions")
 	flag.Parse()
 
 	return client.Options{
@@ -41,6 +41,7 @@ func parseFlags() client.Options {
 		SelectModel: *selectModel,
 		URL:         *urlFlag,
 		Role:        *roleFlag,
+		Help:        *helpFlag,
 	}
 }
 

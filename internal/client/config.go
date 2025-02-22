@@ -22,7 +22,6 @@ type Role struct {
 	SystemPrompt string `yaml:"system_prompt,omitempty"`
 }
 
-// Config holds a collection of API configurations.
 type Config struct {
 	APIs  []APIConfig `yaml:"apis"`
 	Roles []Role      `yaml:"roles"`
@@ -31,7 +30,7 @@ type Config struct {
 var confpath = "/.config/.meh/config.yml"
 
 // loadConfig reads the config file from the user's home directory.
-// If no config exists, it returns a default configuration.
+// If no config exists, it returns a default configuration, and saves it.
 func LoadConfig() (*Config, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -64,7 +63,6 @@ func LoadConfig() (*Config, error) {
 	return &conf, nil
 }
 
-// saveConfig writes the configuration to the config file.
 func SaveConfig(conf *Config) error {
 	home, err := os.UserHomeDir()
 	if err != nil {

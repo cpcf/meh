@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// Message represents a single chat message.
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
@@ -34,11 +33,9 @@ func (r Request) String() string {
 	return fmt.Sprintf("Request{Model: %s, Messages: %v, Prompt: %s, Suffix: %s, Stream: %t}", r.Model, r.Messages, r.Prompt, r.Suffix, r.Stream)
 }
 
-// Response represents the API's response.
 type Response struct {
-	Model     string    `json:"model"`
-	CreatedAt time.Time `json:"created_at"`
-	// Chat responses return a message object; generate responses return the full reply in Response.
+	Model              string      `json:"model"`
+	CreatedAt          time.Time   `json:"created_at"`
 	Message            *Message    `json:"message,omitempty"`
 	Response           string      `json:"response,omitempty"`
 	Done               bool        `json:"done"`
@@ -119,17 +116,16 @@ type runningModelsResponse struct {
 	} `json:"models"`
 }
 
-// OllamaAPI implements the full LLM API interface.
 type OllamaAPI struct {
-	baseURL      string    // Base URL, e.g., "http://localhost:11434/api"
-	model        string    // Selected model name (e.g., "llama3.2")
-	systemPrompt string    // System prompt
-	history      []Message // Conversation history for Chat
-	closed       bool      // Flag to mark if the API is closed
+	baseURL      string
+	model        string
+	systemPrompt string
+	history      []Message
+	closed       bool
 }
 
 func NewAPI(baseURL, system string) *OllamaAPI {
-	// if we have a system prompt, add it to the history
+	// if we have a system prompt, add it to the start of the history
 	history := make([]Message, 0)
 	if system != "" {
 		history = append(history, Message{Role: "system", Content: system})
@@ -265,7 +261,6 @@ func (o *OllamaAPI) Models() []string {
 	return models
 }
 
-// SelectModel sets the active model
 func (o *OllamaAPI) SelectModel(model string) {
 	o.model = model
 }
