@@ -20,6 +20,7 @@ type Options struct {
 	SelectModel bool
 	URL         string
 	Role        string
+	Help        bool
 	QueryArgs   []string
 }
 
@@ -75,9 +76,12 @@ func RunApp(opts Options) error {
 	case len(opts.QueryArgs) > 0:
 		query := strings.Join(opts.QueryArgs, " ")
 		return runQuery(api, query)
-	default:
+	case opts.Help:
 		usage()
 		return nil
+	default:
+		// What should the defaut behaviour be?
+		return runInteractive(api)
 	}
 }
 
