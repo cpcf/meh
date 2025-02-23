@@ -9,17 +9,9 @@ import (
 
 type ErrNoConfig error
 
-// Role represents a user-defined role that overrides API/model settings and may include a system prompt.
-type Role struct {
-	Name         string `yaml:"name"`
-	APIURL       string `yaml:"api_url"`
-	Model        string `yaml:"model"`
-	SystemPrompt string `yaml:"system_prompt,omitempty"`
-}
-
 type Config struct {
-	DefaultRole string `yaml:"default_role"`
-	Roles       []Role `yaml:"roles"`
+	DefaultPersona string    `yaml:"default_persona"`
+	Personas       []Persona `yaml:"personas"`
 }
 
 var confpath = "/.config/.meh/config.yml"
@@ -82,11 +74,35 @@ func EditConfig() error {
 	return nil
 }
 
-func (c *Config) FindRole(name string) (Role, bool) {
-	for _, role := range c.Roles {
-		if role.Name == name {
-			return role, true
+func (c *Config) FindPersona(name string) (Persona, bool) {
+	for _, persona := range c.Personas {
+		if persona.Name == name {
+			return persona, true
 		}
 	}
-	return Role{}, false
+	return Persona{}, false
+}
+
+func (c *Config) AddPersona(persona Persona, setDefault bool) {
+	c.Personas = append(c.Personas, persona)
+	if setDefault {
+		c.DefaultPersona = persona.Name
+	}
+	SaveConfig(c)
+}
+
+func (c *Config) LoadDefaultPersona(opts Options) (Persona, bool) {
+	havePersona := false
+	persona, ok := c.FindPersona(c.DefaultPersona)
+	if ok {
+		havePersona = true
+	}
+	if opts.Persona != "" {
+		specifiedPersona, ok := c.FindPersona(opts.Persona)
+		if ok {
+			havePersona = true
+			persona = specifiedPersona
+		}
+	}
+	return persona, havePersona
 }

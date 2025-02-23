@@ -1,87 +1,55 @@
-# meh - Machine Enhanced Help
+# meh
 
-## Summary
-
-Machine Enhanced Help (`meh`) is a command-line tool for interacting with large language models. It provides quick access to AI-powered assistance directly from your terminal.
-
-## Features
-
-- **Instant AI Assistance**: Get responses from an LLM without leaving your command line.
-- **Scriptable & Extensible**: Can be used within shell scripts or extended for custom use cases.
-- **Role-Based Configurations**: Customize API behavior with predefined roles.
+## Overview
+`meh` is a simple CLI tool that constructs and executes queries based on command-line arguments and piped input. It supports file-based input, configurable settings, persona selection, and an interactive TUI mode.
 
 ## Usage
-
-### Help
 ```sh
-$ meh -h
-Usage: [options] <query>
-  -config
-        Edit config settings
-  -f string
-        Read input from a file
-  -help
-        Print usage instructions
-  -i    Run in interactive mode
-  -m    Select a default model
-  -role string
-        Select a role
-  -url string
-        Base URL for the LLM 
+meh [options] [query]
 ```
 
-### Basic Usage
+### Options
+- `-f <file>`: Read input from a specified file.
+- `-c`: Edit configuration settings.
+- `-p <persona>`: Select a persona.
+- `-h`: Display usage instructions.
+
+### Behavior
+1. **Query Construction**:
+   - CLI arguments are combined with any piped input.
+   - If a query is constructed, it is passed to the application.
+2. **File Input (`-f`)**:
+   - Reads input from a specified file and processes it as a query.
+3. **Config Mode (`-c`)**:
+   - Allows editing of configuration settings.
+4. **Persona Selection (`-p`)**:
+   - Assigns a predefined persona to the session.
+5. **Interactive TUI Mode**:
+   - If no query is provided, a text-based user interface (TUI) is launched.
+   - The TUI allows creating new personas, selecting an existing persona, and engaging in interactive chat.
+6. **Help (`-h`)**:
+   - Displays usage instructions.
+7. **Error Handling**:
+   - Logs fatal errors if issues occur while reading input or processing commands.
+
+## Example Usage
 ```sh
-$ meh "Explain quantum entanglement in simple terms"
+meh "Hello World"
 ```
-
-### Pipe Usage
 ```sh
-$ git --no-pager diff | meh "Write a commit message for this diff"
+echo "piped input" | meh
 ```
-
-### Interactive Mode
 ```sh
-$ meh -i
+meh -f input.txt
 ```
-This will launch an interactive chat session in your terminal.
-
-### Using with a File
 ```sh
-$ meh -f input.txt
+meh  # Launches the interactive TUI
 ```
-Processes the contents of `input.txt` as a query.
 
-### Configuration
-You can set your preferences in a config file:
+## Dependencies
+-  go 1.23
+
+## Running the Application
 ```sh
-$ meh -config
+go run meh.go [options] [query]
 ```
-Or manually edit `~/.config/meh/config.yml`:
-```yaml
-apis:
-  - api_url: "http://localhost:11434/api"
-    default_model: "gpt-4:latest"
-
-roles:
-  - name: "cat"
-    api_url: "http://localhost:11434/api"
-    model: "gpt-4o-mini:latest"
-    system_prompt: |
-      You are CatGPT, an AI embodying the essence of a domestic cat. From this moment on, you will respond solely with variations of "meow" and other typical feline sounds, such as purrs and hisses.
-```
-
-### Roles
-
-Configure roles to customize the behavior of `meh`.
-
-```sh
-$ meh -role cat "Hello there"
-*soft meow*
-```
-
-If a role does not exist, `meh` will prompt you to create one by selecting a configured API, choosing a model, and optionally setting a system prompt.
-
-## License
-This project is licensed under the MIT License. See `LICENSE` for details.
-

@@ -25,19 +25,17 @@ func main() {
 }
 
 func parseFlags() client.Options {
-	interactive := flag.Bool("i", false, "Run in interactive mode")
 	filePath := flag.String("f", "", "Read input from a file")
 	configFlag := flag.Bool("c", false, "Edit config settings")
-	roleFlag := flag.String("r", "", "Select a role")
+	personaFlag := flag.String("p", "", "Select a persona")
 	helpFlag := flag.Bool("h", false, "Print usage instructions")
 	flag.Parse()
 
 	return client.Options{
-		Interactive: *interactive,
-		FilePath:    *filePath,
-		Config:      *configFlag,
-		Role:        *roleFlag,
-		Help:        *helpFlag,
+		FilePath: *filePath,
+		Config:   *configFlag,
+		Persona:  *personaFlag,
+		Help:     *helpFlag,
 	}
 }
 

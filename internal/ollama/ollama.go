@@ -16,7 +16,7 @@ type Message struct {
 }
 
 func (m Message) String() string {
-	return fmt.Sprintf("Message{Role: %s, Content: %s}", m.Role, m.Content)
+	return fmt.Sprintf("Message{role: %s, Content: %s}", m.Role, m.Content)
 }
 
 // Request represents a call to the LLM API. It supports both chat and completion requests.
@@ -84,7 +84,6 @@ func sendStreamRequest(url string, req Request, respChan chan<- Response) error 
 	if err != nil {
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
-
 	httpResp, err := http.Post(url, "application/json", bytes.NewReader(js))
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
@@ -124,7 +123,7 @@ type OllamaAPI struct {
 	closed       bool
 }
 
-func NewAPI(baseURL, system string) *OllamaAPI {
+func NewAPI(baseURL, model, system string) *OllamaAPI {
 	// if we have a system prompt, add it to the start of the history
 	history := make([]Message, 0)
 	if system != "" {
@@ -135,8 +134,20 @@ func NewAPI(baseURL, system string) *OllamaAPI {
 		baseURL:      baseURL,
 		systemPrompt: system,
 		history:      history,
+		model:        model,
 	}
 
+}
+
+func (o *OllamaAPI) Verify() bool {
+	endpoint := o.baseURL + "/version"
+	httpResp, err := http.Get(endpoint)
+	if err != nil {
+		o.closed = true
+		return false
+	}
+	defer httpResp.Body.Close()
+	return httpResp.StatusCode == http.StatusOK
 }
 
 // Chat sends a chat message using the /chat endpoint.
@@ -168,8 +179,9 @@ func (o *OllamaAPI) Chat(message string, results chan string, stream bool) {
 
 		var fullResponse string
 		for resp := range respChan {
-			results <- resp.Message.Content
-			fullResponse += resp.Message.Content
+			message := resp.Message.Content
+			results <- message
+			fullResponse += message
 			if resp.Done {
 				break
 			}
@@ -243,14 +255,14 @@ func (o *OllamaAPI) Models() []string {
 
 	httpResp, err := http.Get(endpoint)
 	if err != nil {
-		fmt.Printf("Error fetching models: %v\n", err)
+		//fmt.Printf("Error fetching models: %v\n", err)
 		return []string{}
 	}
 	defer httpResp.Body.Close()
 
 	var resp runningModelsResponse
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
-		fmt.Printf("Error decoding models response: %v\n", err)
+		//fmt.Printf("Error decoding models response: %v\n", err)
 		return []string{}
 	}
 

@@ -2,34 +2,26 @@ package client
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpcf/meh/internal/ollama"
 )
 
-const gap = "\n\n"
-
-func ChatTui(api API) {
-	p := tea.NewProgram(initialModel(api))
-
-	if _, err := p.Run(); err != nil {
-		log.Fatal(err)
-	}
+type API interface {
+	Models() []string
+	SelectModel(model string)
+	Chat(query string, results chan string, flag bool)
+	Prompt(query string, results chan string, flag bool)
 }
 
-type newLlmMsg struct{}
-type contLlmMsg struct{}
-
-type (
-	errMsg error
-)
-
-type model struct {
+type ChatModel struct {
 	api          API
+	name         string
+	ready        bool
 	viewport     viewport.Model
 	messages     []string
 	textarea     textarea.Model
@@ -39,7 +31,16 @@ type model struct {
 	err          error
 }
 
-func initialModel(api API) model {
+func (m ChatModel) Init() tea.Cmd {
+	return tea.Batch(textarea.Blink, tea.WindowSize())
+}
+
+const gap = "\n\n"
+
+type newLlmMsg struct{}
+type contLlmMsg struct{}
+
+func NewChatModel(persona Persona) ChatModel {
 	ta := textarea.New()
 	ta.Placeholder = "Enter message..."
 	ta.Focus()
@@ -61,8 +62,10 @@ Type a message and press Enter to send.`)
 
 	ta.KeyMap.InsertNewline.SetEnabled(false)
 
-	return model{
-		api:          api,
+	return ChatModel{
+		api:          ollama.NewAPI(persona.APIURL, persona.Model, persona.SystemPrompt),
+		name:         persona.Name,
+		ready:        true,
 		textarea:     ta,
 		messages:     []string{},
 		viewport:     vp,
@@ -72,11 +75,11 @@ Type a message and press Enter to send.`)
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return textarea.Blink
-}
+func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if !m.ready {
+		return m, func() tea.Msg { return switchMsg(mainState) }
+	}
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		tiCmd tea.Cmd
 		vpCmd tea.Cmd
@@ -99,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
+			return m, func() tea.Msg { return switchMsg(mainState) }
 		case tea.KeyEnter:
 			if m.waitingOnLlm {
 				return m, nil
@@ -123,11 +126,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	// We handle errors just like any other message
-	case errMsg:
-		m.err = msg
-		return m, nil
-
 	// Add a new LLM message to the history
 	case newLlmMsg:
 		m.messages = append(m.messages, m.senderStyle.Render("Assistant: ")+m.textarea.Value())
@@ -141,6 +139,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.SetContent(lipgloss.NewStyle().Width(m.viewport.Width).Render(strings.Join(m.messages, "\n")))
 			m.viewport.GotoBottom()
 			return m, func() tea.Msg {
+				// we return here so we can render the streamed results
 				return contLlmMsg{}
 			}
 		}
@@ -150,7 +149,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(tiCmd, vpCmd)
 }
 
-func (m model) View() string {
+func (m ChatModel) View() string {
+	if !m.ready {
+		return "No persona selected.\nPress any key to return."
+	}
 	return fmt.Sprintf(
 		"%s%s%s",
 		m.viewport.View(),
