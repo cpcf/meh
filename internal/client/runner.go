@@ -35,36 +35,54 @@ func RunApp(opts Options) error {
 	// Load configuration.
 	conf, err := LoadConfig()
 	if err != nil {
+		if _, ok := err.(ErrNoConfig); ok {
+			conf = &Config{}
+			// If no config exists, prompt the user to create a role and then save it
+			// Prompt for name
+			reader := bufio.NewReader(os.Stdin)
+
+			fmt.Print("No config file found. Let's create our first role!\n")
+			fmt.Print("Enter role name: ")
+			roleName, err := reader.ReadString('\n')
+			role, err := CreateRole(strings.TrimSpace(roleName), conf)
+			if err != nil {
+				return err
+			}
+			api := ollama.NewAPI(role.APIURL, role.SystemPrompt)
+			api.SelectModel(role.Model)
+			runInteractive(api)
+			return nil
+		}
 		return fmt.Errorf("error loading config: %w", err)
 	}
 
-	// Select the active API.
-	activeAPI, conf, err := selectAPI(conf, opts.URL, opts.Role)
+	// Select the active Role.
+	role, err := selectRole(conf, opts.Role)
 	if err != nil {
 		return err
 	}
 	// Initialize the API client.
-	api := ollama.NewAPI(activeAPI.APIURL, activeAPI.SystemPrompt)
+	api := ollama.NewAPI(role.APIURL, role.SystemPrompt)
 	models := api.Models()
 	if len(models) == 0 {
 		return fmt.Errorf("no models found")
 	}
 
 	// Ensure a valid default model is selected.
-	if activeAPI.DefaultModel == "" || !contains(models, activeAPI.DefaultModel) || opts.SelectModel {
-		if err := selectModelInteractively(api, models, &activeAPI); err != nil {
+	if role.Model == "" || !contains(models, role.Model) || opts.SelectModel {
+		if err := selectModelInteractively(api, models, &role); err != nil {
 			return err
 		}
-		updateAPIConfig(conf, activeAPI)
+		updateRole(conf, role)
 		if err := SaveConfig(conf); err != nil {
 			return fmt.Errorf("error saving config: %w", err)
 		}
-		// If we were only selecting a model, exit after updating.
+		// If we were only updating a default model, exit after updating.
 		if opts.SelectModel {
 			return nil
 		}
 	} else {
-		api.SelectModel(activeAPI.DefaultModel)
+		api.SelectModel(role.Model)
 	}
 
 	switch {
@@ -85,63 +103,32 @@ func RunApp(opts Options) error {
 	return nil
 }
 
-func selectAPI(conf *Config, urlFlag, roleFlag string) (APIConfig, *Config, error) {
-	var activeAPI APIConfig
+func selectRole(conf *Config, roleFlag string) (Role, error) {
 	if roleFlag != "" {
 		role, found := FindRole(*conf, roleFlag)
 		if !found {
 			fmt.Printf("Role '%s' does not exist. Let's create it.\n", roleFlag)
 			var err error
-			role, err = CreateRole(roleFlag, *conf)
+			role, err = CreateRole(roleFlag, conf)
 			if err != nil {
-				return activeAPI, nil, err
-			}
-			conf.Roles = append(conf.Roles, role)
-			if err := SaveConfig(conf); err != nil {
-				return activeAPI, nil, fmt.Errorf("error saving config: %w", err)
+				return role, err
 			}
 			fmt.Printf("Role %v created successfully.\n", role)
 		}
-		activeAPI = APIConfig{
-			APIURL:       role.APIURL,
-			DefaultModel: role.Model,
-			SystemPrompt: role.SystemPrompt,
-		}
-	} else if urlFlag != "" {
-		found := false
-		for _, apiConf := range conf.APIs {
-			if apiConf.APIURL == urlFlag {
-				activeAPI = apiConf
-				found = true
-				break
-			}
-		}
-		if !found {
-			activeAPI = APIConfig{APIURL: urlFlag}
-			conf.APIs = append(conf.APIs, activeAPI)
-			if err := SaveConfig(conf); err != nil {
-				return activeAPI, conf, fmt.Errorf("error saving config: %w", err)
-			}
-		}
-	} else if len(conf.APIs) > 0 {
-		activeAPI = conf.APIs[0]
+		return role, nil
+	} else if conf.DefaultRole != "" {
+		return selectRole(conf, conf.DefaultRole)
 	} else {
-		return activeAPI, conf, fmt.Errorf("no APIs configured")
+		return Role{}, fmt.Errorf("no roles configured")
 	}
-	return activeAPI, conf, nil
 }
 
-// updateAPIConfig updates the default model for the active API in the config.
-func updateAPIConfig(conf *Config, activeAPI APIConfig) {
-	for i, a := range conf.APIs {
-		if a.APIURL == activeAPI.APIURL {
-			conf.APIs[i].DefaultModel = activeAPI.DefaultModel
+func updateRole(conf *Config, role Role) {
+	for i, a := range conf.Roles {
+		if a.Name == role.Name {
+			conf.Roles[i].Model = role.Model
 			return
 		}
-	}
-	// Fallback: update the first API if not found.
-	if len(conf.APIs) > 0 {
-		conf.APIs[0].DefaultModel = activeAPI.DefaultModel
 	}
 }
 
@@ -152,9 +139,9 @@ type API interface {
 	Prompt(query string, results chan string, flag bool)
 }
 
-func selectModelInteractively(api API, models []string, activeAPI *APIConfig) error {
+func selectModelInteractively(api API, models []string, role *Role) error {
 	if len(models) == 1 {
-		activeAPI.DefaultModel = models[0]
+		role.Model = models[0]
 		api.SelectModel(models[0])
 		return nil
 	}
@@ -176,8 +163,8 @@ func selectModelInteractively(api API, models []string, activeAPI *APIConfig) er
 	if modelIndex < 0 || modelIndex >= len(models) {
 		return fmt.Errorf("invalid model index")
 	}
-	activeAPI.DefaultModel = models[modelIndex]
-	api.SelectModel(activeAPI.DefaultModel)
+	role.Model = models[modelIndex]
+	api.SelectModel(role.Model)
 	return nil
 }
 

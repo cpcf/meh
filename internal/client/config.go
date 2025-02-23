@@ -7,12 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// APIConfig holds configuration for a single API.
-type APIConfig struct {
-	APIURL       string `yaml:"api_url"`
-	DefaultModel string `yaml:"default_model"`
-	SystemPrompt string `yaml:"system_prompt,omitempty"`
-}
+type ErrNoConfig error
 
 // Role represents a user-defined role that overrides API/model settings and may include a system prompt.
 type Role struct {
@@ -23,14 +18,13 @@ type Role struct {
 }
 
 type Config struct {
-	APIs  []APIConfig `yaml:"apis"`
-	Roles []Role      `yaml:"roles"`
+	DefaultRole string `yaml:"default_role"`
+	Roles       []Role `yaml:"roles"`
 }
 
 var confpath = "/.config/.meh/config.yml"
 
 // loadConfig reads the config file from the user's home directory.
-// If no config exists, it returns a default configuration, and saves it.
 func LoadConfig() (*Config, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -38,19 +32,7 @@ func LoadConfig() (*Config, error) {
 	}
 	configPath := home + confpath
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		defaultConf := &Config{
-
-			APIs: []APIConfig{
-				{
-					APIURL:       "http://minty.local:11434/api",
-					DefaultModel: "",
-				},
-			},
-		}
-		if err := SaveConfig(defaultConf); err != nil {
-			return nil, err
-		}
-		return defaultConf, nil
+		return nil, ErrNoConfig(err)
 	}
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -98,4 +80,13 @@ func EditConfig() error {
 		return err
 	}
 	return nil
+}
+
+func (c *Config) FindRole(name string) (Role, bool) {
+	for _, role := range c.Roles {
+		if role.Name == name {
+			return role, true
+		}
+	}
+	return Role{}, false
 }

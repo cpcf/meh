@@ -27,19 +27,15 @@ func main() {
 func parseFlags() client.Options {
 	interactive := flag.Bool("i", false, "Run in interactive mode")
 	filePath := flag.String("f", "", "Read input from a file")
-	configFlag := flag.Bool("config", false, "Edit config settings")
-	selectModel := flag.Bool("m", false, "Select a default model")
-	urlFlag := flag.String("url", "", "Base URL for the LLM API")
-	roleFlag := flag.String("role", "", "Select a role")
-	helpFlag := flag.Bool("help", false, "Print usage instructions")
+	configFlag := flag.Bool("c", false, "Edit config settings")
+	roleFlag := flag.String("r", "", "Select a role")
+	helpFlag := flag.Bool("h", false, "Print usage instructions")
 	flag.Parse()
 
 	return client.Options{
 		Interactive: *interactive,
 		FilePath:    *filePath,
 		Config:      *configFlag,
-		SelectModel: *selectModel,
-		URL:         *urlFlag,
 		Role:        *roleFlag,
 		Help:        *helpFlag,
 	}
