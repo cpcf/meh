@@ -71,6 +71,7 @@ func (m SelectPersonaModel) Init() tea.Cmd {
 }
 
 func (m SelectPersonaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -82,7 +83,8 @@ func (m SelectPersonaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.currentPersona = item.persona
-			return m, func() tea.Msg { return personaMsg(item.persona) }
+			cmds = append(cmds, SetPersonaCmd(item.persona))
+			cmds = append(cmds, func() tea.Msg { return switchMsg(mainState) })
 		}
 	case tea.WindowSizeMsg:
 		UpdateWidth(&m, msg.Width)
@@ -93,7 +95,8 @@ func (m SelectPersonaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m SelectPersonaModel) View() string {
