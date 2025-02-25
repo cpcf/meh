@@ -128,7 +128,7 @@ func (m ChatModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Add a new LLM message to the history
 	case newLlmMsg:
-		m.messages = append(m.messages, m.senderStyle.Render("Assistant: ")+m.textarea.Value())
+		m.messages = append(m.messages, m.senderStyle.Render(fmt.Sprintf("%s: ", m.name))+m.textarea.Value())
 		return m, func() tea.Msg {
 			return contLlmMsg{}
 		}

@@ -17,7 +17,7 @@ const (
 	createPersonaState
 )
 const maxHeight = 1200
-const maxWidth = 200
+const maxWidth = 400
 const statusWidth = 40
 const statusMarginOffset = 18 // Longest string on Left side
 
@@ -145,38 +145,7 @@ func (m MainModel) View() string {
 func (m MainModel) MainMenu() string {
 	s := m.styles
 	// Current Persona (right side)
-	var status string
-	{
-		var (
-			name   string
-			url    string
-			model  string
-			prompt string
-		)
-		name = s.Highlight.Render("Name:  ")
-		url = s.Highlight.Render("URL:   ")
-		model = s.Highlight.Render("Model: ")
-		prompt = s.Highlight.Render("Prompt:")
-
-		if m.persona != (Persona{}) {
-			name = fmt.Sprintf("%s%s\n", name, m.persona.Name)
-			url = fmt.Sprintf("%s%s\n", url, m.persona.APIURL)
-			model = fmt.Sprintf("%s%s\n", model, m.persona.Model)
-			prompt = fmt.Sprintf("%s\n%s\n", prompt, strings.Split(m.persona.SystemPrompt, "\n")[0])
-
-		}
-		h, v := m.styles.Base.GetFrameSize()
-		statusMarginLeft := m.width - statusMarginOffset - h - statusWidth - s.Status.GetMarginRight()
-		status = s.Status.
-			Height(m.Height() - v - 8).
-			Width(statusWidth).
-			MarginLeft(statusMarginLeft).
-			Render(s.StatusHeader.Render("Current Persona") + "\n" +
-				name +
-				url +
-				model +
-				prompt)
-	}
+	status := CreateStatusBar(s, m.persona, m.width-statusMarginOffset, m.height-8, "Current Persona")
 
 	header := appBoundaryView(&m, "meh")
 	menu := "Main Menu:\n(c) Chat\n(r) List Personas\n(n) Create Persona\n(q) Quit"
@@ -205,4 +174,40 @@ func (m MainModel) Height() int {
 
 func (m MainModel) Styles() *Styles {
 	return m.styles
+}
+
+func CreateStatusBar(s *Styles, p Persona, width, height int, title string) string {
+	var status string
+	{
+		var (
+			name   string
+			url    string
+			model  string
+			prompt string
+		)
+		if p != (Persona{}) {
+			name = s.Highlight.Render("Name:  ")
+			url = s.Highlight.Render("URL:   ")
+			model = s.Highlight.Render("Model: ")
+			prompt = s.Highlight.Render("Prompt:")
+
+			name = fmt.Sprintf("%s%s\n", name, p.Name)
+			url = fmt.Sprintf("%s%s\n", url, p.APIURL)
+			model = fmt.Sprintf("%s%s\n", model, p.Model)
+			prompt = fmt.Sprintf("%s\n%s\n", prompt, strings.Split(p.SystemPrompt, "\n")[0])
+
+		}
+		h, v := s.Base.GetFrameSize()
+		statusMarginLeft := width - h - statusWidth - s.Status.GetMarginRight()
+		status = s.Status.
+			Height(height - v).
+			Width(statusWidth).
+			MarginLeft(statusMarginLeft).
+			Render(s.StatusHeader.Render(title) + "\n" +
+				name +
+				url +
+				model +
+				prompt)
+	}
+	return status
 }

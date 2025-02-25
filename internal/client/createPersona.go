@@ -156,49 +156,21 @@ func (m CreatePersonaModel) View() string {
 		form := m.lg.NewStyle().Margin(1, 0).Render(v)
 
 		// Status (right side)
-		var status string
-		{
-			var (
-				name       string
-				url        string
-				model      string
-				setdefault string
-			)
-
-			if m.form.GetString("name") != "" {
-				name = fmt.Sprintf("%s%s\n", s.Highlight.Render("Name:  "), m.form.GetString("name"))
-			}
-			if m.form.GetString("url") != "" {
-				url = fmt.Sprintf("%s%s\n", s.Highlight.Render("URL:   "), m.form.GetString("url"))
-			}
-			if m.form.GetString("model") != "" {
-				model = fmt.Sprintf("%s%s\n", s.Highlight.Render("Model: "), m.form.GetString("model"))
-			}
-			if m.form.GetBool("default") {
-				setdefault = "Set as default\n"
-			}
-
-			const statusWidth = 40
-			h, v := m.styles.Base.GetFrameSize()
-			statusMarginLeft := m.width - statusWidth - h - lipgloss.Width(form) - s.Status.GetMarginRight()
-			status = s.Status.
-				Height(m.Height() - v - 8).
-				Width(statusWidth).
-				MarginLeft(statusMarginLeft).
-				Render(s.StatusHeader.Render("New Persona") + "\n" +
-					name +
-					url +
-					model +
-					setdefault)
+		p := Persona{
+			Name:         m.form.GetString("name"),
+			APIURL:       m.form.GetString("url"),
+			Model:        m.form.GetString("model"),
+			SystemPrompt: m.form.GetString("prompt"),
 		}
+		status := CreateStatusBar(s, p, m.width-lipgloss.Width(form), m.Height()-8, "Current Persona")
 
 		errors := m.form.Errors()
 		header := appBoundaryView(&m, "Persona Creator")
 		if len(errors) > 0 {
 			header = appErrorBoundaryView(&m, m.errorView())
 		}
-		body := lipgloss.JoinHorizontal(lipgloss.Top, form, status)
 
+		body := lipgloss.JoinHorizontal(lipgloss.Top, form, status)
 		footer := appBoundaryView(&m, m.form.Help().ShortHelpView(m.form.KeyBinds()))
 		if len(errors) > 0 {
 			footer = appErrorBoundaryView(&m, "")

@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -103,30 +102,13 @@ func (m SelectPersonaModel) View() string {
 	v := m.list.View()
 	list := s.Base.Render(v)
 
-	var status string
-	{
-		name := fmt.Sprintf("%s%s\n", s.Highlight.Render("Name:  "), m.currentPersona.Name)
-		url := fmt.Sprintf("%s%s\n", s.Highlight.Render("URL:   "), m.currentPersona.APIURL)
-		model := fmt.Sprintf("%s%s\n", s.Highlight.Render("Model: "), m.currentPersona.Model)
-		prompt := fmt.Sprintf("%s\n%s\n", s.Highlight.Render("Prompt:"), strings.Split(m.currentPersona.SystemPrompt, "\n")[0])
-		h, v := m.styles.Base.GetFrameSize()
-		statusMarginLeft := m.width - statusWidth - (h+1)*2 - trueWidth(m.list) - s.Status.GetMarginRight()
-		status = s.Status.
-			Height(m.list.Height() - v).
-			Width(statusWidth).
-			MarginLeft(statusMarginLeft).
-			Render(s.StatusHeader.Render("Current Persona") + "\n" +
-				name +
-				url +
-				model +
-				prompt)
+	h := s.Base.GetHorizontalFrameSize()
+	status := CreateStatusBar(s, m.currentPersona, m.width-h-trueWidth(m.list), m.list.Height(), "Current Persona")
+	header := appBoundaryView(&m, "select a persona")
+	body := lipgloss.JoinHorizontal(lipgloss.Top, list, status)
+	footer := appBoundaryView(&m, m.list.Help.ShortHelpView(m.list.ShortHelp()))
 
-		header := appBoundaryView(&m, "select a persona")
-		body := lipgloss.JoinHorizontal(lipgloss.Top, list, status)
-		footer := appBoundaryView(&m, m.list.Help.ShortHelpView(m.list.ShortHelp()))
-
-		return s.Base.Render(header + "\n" + body + "\n\n" + footer)
-	}
+	return s.Base.Render(header + "\n" + body + "\n\n" + footer)
 }
 
 func (m SelectPersonaModel) Height() int {
@@ -160,5 +142,5 @@ func trueWidth(l list.Model) int {
 			w = lipgloss.Width(i.Description())
 		}
 	}
-	return min(maxw, w)
+	return min(maxw, w) + 2
 }
