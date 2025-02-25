@@ -19,7 +19,7 @@ const (
 type CreatePersonaModel struct {
 	config *Config
 	lg     *lipgloss.Renderer
-	styles *Styles
+	styles *Theme
 	form   *huh.Form
 	width  int
 	height int
@@ -32,7 +32,7 @@ func NewCreatePersonaModel(c *Config) CreatePersonaModel {
 		config: c,
 	}
 	m.lg = lipgloss.DefaultRenderer()
-	m.styles = NewStyles(m.lg)
+	m.styles = NewTheme(m.lg)
 	var (
 		url string
 	)
@@ -112,7 +112,7 @@ func (m CreatePersonaModel) Init() tea.Cmd {
 func (m CreatePersonaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = min(msg.Width, maxWidth) - m.styles.Base.GetHorizontalFrameSize()
+		m.width = min(msg.Width, maxWidth) - m.styles.Base().GetHorizontalFrameSize()
 		m.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -176,7 +176,7 @@ func (m CreatePersonaModel) View() string {
 			footer = appErrorBoundaryView(&m, "")
 		}
 
-		return s.Base.Render(header + "\n" + body + "\n\n" + footer)
+		return s.Base().Render(header + "\n" + body + "\n\n" + footer)
 	}
 }
 
@@ -194,7 +194,7 @@ func (m *CreatePersonaModel) SetWidth(width int) {
 	m.width = width
 }
 
-func (m CreatePersonaModel) Styles() *Styles {
+func (m CreatePersonaModel) Styles() *Theme {
 	return m.styles
 }
 

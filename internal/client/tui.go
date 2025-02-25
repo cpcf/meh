@@ -28,7 +28,7 @@ type MainModel struct {
 	selectPersonaModel SelectPersonaModel
 	config             *Config
 	persona            Persona
-	styles             *Styles
+	styles             *Theme
 	width              int
 	height             int
 }
@@ -56,7 +56,7 @@ func NewMainModel(c *Config, p Persona) MainModel {
 		currentState:       mainState,
 		config:             c,
 		createPersonaModel: NewCreatePersonaModel(c),
-		styles:             NewStyles(lipgloss.DefaultRenderer()),
+		styles:             NewTheme(lipgloss.DefaultRenderer()),
 	}
 	m.persona = p
 	return m
@@ -154,7 +154,7 @@ func (m MainModel) MainMenu() string {
 	// TODO: Add help for the main menu
 	footer := appBoundaryView(&m, "")
 
-	return s.Base.Render(header + "\n" + body + "\n\n" + footer)
+	return s.Base().Render(header + "\n" + body + "\n\n" + footer)
 }
 
 func (m MainModel) Width() int {
@@ -172,11 +172,11 @@ func (m MainModel) Height() int {
 	return m.height
 }
 
-func (m MainModel) Styles() *Styles {
+func (m MainModel) Styles() *Theme {
 	return m.styles
 }
 
-func CreateStatusBar(s *Styles, p Persona, width, height int, title string) string {
+func CreateStatusBar(s *Theme, p Persona, width, height int, title string) string {
 	var status string
 	{
 		var (
@@ -186,24 +186,24 @@ func CreateStatusBar(s *Styles, p Persona, width, height int, title string) stri
 			prompt string
 		)
 		if p != (Persona{}) {
-			name = s.Highlight.Render("Name:  ")
-			url = s.Highlight.Render("URL:   ")
-			model = s.Highlight.Render("Model: ")
-			prompt = s.Highlight.Render("Prompt:")
+			name = s.TextHighlight().Render("Name:  ")
+			url = s.TextHighlight().Render("URL:   ")
+			model = s.TextHighlight().Render("Model: ")
+			prompt = s.TextHighlight().Render("Prompt:")
 
-			name = fmt.Sprintf("%s%s\n", name, p.Name)
-			url = fmt.Sprintf("%s%s\n", url, p.APIURL)
-			model = fmt.Sprintf("%s%s\n", model, p.Model)
+			name = fmt.Sprintf("%s%s", name, p.Name)
+			url = fmt.Sprintf("%s%s", url, p.APIURL)
+			model = fmt.Sprintf("%s%s", model, p.Model)
 			prompt = fmt.Sprintf("%s\n%s\n", prompt, strings.Split(p.SystemPrompt, "\n")[0])
 
 		}
-		h, v := s.Base.GetFrameSize()
-		statusMarginLeft := width - h - statusWidth - s.Status.GetMarginRight()
-		status = s.Status.
+		h, v := s.Base().GetFrameSize()
+		statusMarginLeft := width - h - statusWidth - s.Status().GetMarginRight()
+		status = s.Status().
 			Height(height - v).
 			Width(statusWidth).
 			MarginLeft(statusMarginLeft).
-			Render(s.StatusHeader.Render(title) + "\n" +
+			Render(s.StatusHeader().Render(title) + "\n" +
 				name +
 				url +
 				model +

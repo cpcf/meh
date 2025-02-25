@@ -45,7 +45,7 @@ type SelectPersonaModel struct {
 	list           list.Model
 	width          int
 	height         int
-	styles         *Styles
+	styles         *Theme
 	lg             *lipgloss.Renderer
 	currentPersona Persona
 	delegate       list.DefaultDelegate
@@ -56,9 +56,9 @@ func NewPersonaListModel(personas []Persona, currentPersona Persona) SelectPerso
 	for i, persona := range personas {
 		items[i] = item{persona: persona}
 	}
-	d := list.NewDefaultDelegate()
+	d := NewListDelegate(*NewTheme(lipgloss.DefaultRenderer()))
 	lg := lipgloss.DefaultRenderer()
-	s := NewStyles(lg)
+	s := NewTheme(lg)
 
 	l := list.New(items, d, 0, 0)
 	l.SetShowHelp(false)
@@ -88,7 +88,7 @@ func (m SelectPersonaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		UpdateWidth(&m, msg.Width)
-		h, v := m.styles.Base.GetFrameSize()
+		h, v := m.styles.Base().GetFrameSize()
 		m.height = msg.Height - v
 		m.list.SetSize(min(msg.Width-h, maxListWidth), msg.Height-v-listVerticalOffset)
 	}
@@ -103,15 +103,15 @@ func (m SelectPersonaModel) View() string {
 	s := m.styles
 	// List (left side)
 	v := m.list.View()
-	list := s.Base.Render(v)
+	list := s.Base().Render(v)
 
-	h := s.Base.GetHorizontalFrameSize()
+	h := s.Base().GetHorizontalFrameSize()
 	status := CreateStatusBar(s, m.currentPersona, m.width-h-trueWidth(m.list), m.list.Height(), "Current Persona")
 	header := appBoundaryView(&m, "select a persona")
 	body := lipgloss.JoinHorizontal(lipgloss.Top, list, status)
 	footer := appBoundaryView(&m, m.list.Help.ShortHelpView(m.list.ShortHelp()))
 
-	return s.Base.Render(header + "\n" + body + "\n\n" + footer)
+	return s.Base().Render(header + "\n" + body + "\n\n" + footer)
 }
 
 func (m SelectPersonaModel) Height() int {
@@ -128,7 +128,7 @@ func (m *SelectPersonaModel) SetWidth(width int) {
 	m.width = width
 }
 
-func (m SelectPersonaModel) Styles() *Styles {
+func (m SelectPersonaModel) Styles() *Theme {
 	return m.styles
 }
 
