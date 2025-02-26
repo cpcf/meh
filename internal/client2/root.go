@@ -36,7 +36,7 @@ func NewModel() model {
 
 	return model{
 		content: string(content),
-		header:  NewHeader(40, 3, "Home", "About", "Contact"),
+		header:  NewHeader(60, 3, "Chat", "Select Persona", "Create Persona"),
 	}
 }
 
@@ -88,6 +88,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
+	m.header, cmd = m.header.Update(msg)
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -100,9 +102,6 @@ func (m model) View() string {
 
 func (m model) headerView() string {
 	return m.header.View()
-	title := titleStyle.Render("Mr. Pager")
-	line := strings.Repeat("─", max(0, m.viewport.Width-lipgloss.Width(title)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
 func (m model) footerView() string {
@@ -119,15 +118,8 @@ func max(a, b int) int {
 }
 
 func main() {
-	// Load some text for our viewport
-	content, err := os.ReadFile("README.md")
-	if err != nil {
-		fmt.Println("could not load file:", err)
-		os.Exit(1)
-	}
-
 	p := tea.NewProgram(
-		model{content: string(content)},
+		NewModel(),
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 	)
