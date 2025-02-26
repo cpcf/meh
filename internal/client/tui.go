@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpcf/meh/internal/themes"
 )
 
 type state int
@@ -56,7 +57,7 @@ func NewMainModel(c *Config, p Persona) MainModel {
 		currentState:       mainState,
 		config:             c,
 		createPersonaModel: NewCreatePersonaModel(c),
-		styles:             NewStyles(lipgloss.DefaultRenderer()),
+		styles:             NewStyles(lipgloss.DefaultRenderer(), themes.Mocha),
 	}
 	m.persona = p
 	return m
@@ -145,7 +146,7 @@ func (m MainModel) View() string {
 func (m MainModel) MainMenu() string {
 	s := m.styles
 	// Current Persona (right side)
-	status := CreateStatusBar(s, m.persona, m.width-statusMarginOffset, m.height-8, "Current Persona")
+	status := CreateStatusBar(s, m.persona, m.width-statusMarginOffset, m.height-6, "Current Persona")
 
 	header := appBoundaryView(&m, "meh")
 	menu := "Main Menu:\n(c) Chat\n(r) List Personas\n(n) Create Persona\n(q) Quit"
@@ -191,10 +192,10 @@ func CreateStatusBar(s *Styles, p Persona, width, height int, title string) stri
 			model = s.Highlight.Render("Model: ")
 			prompt = s.Highlight.Render("Prompt:")
 
-			name = fmt.Sprintf("%s%s\n", name, p.Name)
-			url = fmt.Sprintf("%s%s\n", url, p.APIURL)
-			model = fmt.Sprintf("%s%s\n", model, p.Model)
-			prompt = fmt.Sprintf("%s\n%s\n", prompt, strings.Split(p.SystemPrompt, "\n")[0])
+			name = fmt.Sprintf("%s%s\n", name, s.Base.Render(p.Name))
+			url = fmt.Sprintf("%s%s\n", url, s.Base.Render(p.APIURL))
+			model = fmt.Sprintf("%s%s\n", model, s.Base.Render(p.Model))
+			prompt = fmt.Sprintf("%s\n%s\n", prompt, s.Base.Render(strings.Split(p.SystemPrompt, "\n")[0]))
 
 		}
 		h, v := s.Base.GetFrameSize()

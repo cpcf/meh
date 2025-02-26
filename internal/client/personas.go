@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cpcf/meh/internal/themes"
 )
 
 // Persona represents a user-defined persona that overrides API/model settings and may include a system prompt.
@@ -58,11 +59,17 @@ func NewPersonaListModel(personas []Persona, currentPersona Persona) SelectPerso
 	}
 	d := list.NewDefaultDelegate()
 	lg := lipgloss.DefaultRenderer()
-	s := NewStyles(lg)
+	s := NewStyles(lg, themes.Mocha)
+
+	d.Styles.NormalDesc.Background(s.Base.GetBackground())
+	d.Styles.SelectedDesc.Background(s.Base.GetBackground())
+	d.Styles.NormalTitle.Background(s.Base.GetBackground())
+	d.Styles.SelectedTitle.Background(s.Base.GetBackground())
 
 	l := list.New(items, d, 0, 0)
 	l.SetShowHelp(false)
 	l.Title = "Personas"
+	l.Styles.Title.Background(s.Base.GetBackground())
 	return SelectPersonaModel{list: l, lg: lg, styles: s, currentPersona: currentPersona}
 }
 
@@ -106,7 +113,7 @@ func (m SelectPersonaModel) View() string {
 	list := s.Base.Render(v)
 
 	h := s.Base.GetHorizontalFrameSize()
-	status := CreateStatusBar(s, m.currentPersona, m.width-h-trueWidth(m.list), m.list.Height(), "Current Persona")
+	status := CreateStatusBar(s, m.currentPersona, m.width-h-trueWidth(m.list), m.list.Height()+2, "Current Persona")
 	header := appBoundaryView(&m, "select a persona")
 	body := lipgloss.JoinHorizontal(lipgloss.Top, list, status)
 	footer := appBoundaryView(&m, m.list.Help.ShortHelpView(m.list.ShortHelp()))

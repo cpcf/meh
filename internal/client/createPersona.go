@@ -32,7 +32,7 @@ func NewCreatePersonaModel(c *Config) CreatePersonaModel {
 		config: c,
 	}
 	m.lg = lipgloss.DefaultRenderer()
-	m.styles = NewStyles(m.lg)
+	m.styles = NewStyles(m.lg, DefaultTheme{})
 	var (
 		url string
 	)
